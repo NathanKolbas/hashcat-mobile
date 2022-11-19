@@ -17,6 +17,12 @@ USE_SYSTEM_XXHASH       ?= 0
 ## do not change, requires some hacks
 USE_SYSTEM_UNRAR        ?= 0
 
+## Android
+BUILD_ANDROID			?= 0
+ANDROID_NDK_PATH		?= 0
+ANDROID_API				?= 28
+ANDROID_TARGET			?= aarch64-linux-android
+
 ##
 ## Detect Operating System
 ##
@@ -31,7 +37,18 @@ UNAME                   := $(patsubst MSYS_NT-%,MSYS2,$(UNAME))
 UNAME                   := $(patsubst MINGW32_NT-%,MSYS2,$(UNAME))
 UNAME                   := $(patsubst MINGW64_NT-%,MSYS2,$(UNAME))
 
-ifeq (,$(filter $(UNAME),Linux FreeBSD NetBSD Darwin CYGWIN MSYS2))
+ifeq ($(BUILD_ANDROID),1)
+UNAME                   := Android
+SHARED					:= 1
+ENABLE_UNRAR			:= 0
+USE_SYSTEM_OPENCL		:= 0
+
+ifeq ($(ANDROID_NDK_PATH),0)
+$(error "! Please specify ANDROID_NDK_PATH such as: /Users/name/Library/ANdroid/sdk/ndk/21.4.707.5529/llvm/prebuilt/darwin-x86_64")
+endif
+endif
+
+ifeq (,$(filter $(UNAME),Android Linux FreeBSD NetBSD Darwin CYGWIN MSYS2))
 $(error "! Your Operating System ($(UNAME)) is not supported by this Makefile")
 endif
 
@@ -43,7 +60,7 @@ endif
 ## Makefile flags
 ##
 
-MAKEFLAGS               += -l -j 8 -rR --no-print-directory
+MAKEFLAGS               += -l -j 1 -rR --no-print-directory
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),)
 MAKEFLAGS               += -j 1
@@ -67,6 +84,13 @@ INSTALL                 := install
 RM                      := rm
 SED                     := sed
 SED_IN_PLACE            := -i
+
+ifeq ($(UNAME),Android)
+CC                      := $(ANDROID_NDK_PATH)/bin/$(ANDROID_TARGET)$(ANDROID_API)-clang
+CXX                     := $(CC)++
+AR                      := $(ANDROID_NDK_PATH)/bin//llvm-ar
+RANLIB					:= $(ANDROID_NDK_PATH)/bin/llvm-ranlib
+endif
 
 ifeq ($(UNAME),Darwin)
 CC                      := clang
@@ -192,6 +216,9 @@ ifeq ($(CC),clang)
 #No longer supported in clang 10.0.0
 #CFLAGS                  += -Wno-enum-conversion
 CFLAGS                  += -Wno-typedef-redefinition
+else ifeq ($(UNAME),Android)
+# Android NDK uses clang
+CFLAGS                  += -Wno-typedef-redefinition
 endif
 
 ifeq ($(USE_SYSTEM_LZMA),0)
@@ -261,6 +288,12 @@ endif
 endif
 endif
 
+ifeq ($(UNAME),Android)
+ifeq ($(ANDROID_TARGET),aarch64-linux-android)
+CFLAGS                  += -march=armv8-a+crc+crypto
+endif
+endif
+
 ifeq ($(UNAME),Linux)
 IS_RPI                  := $(shell grep -q Raspberry /proc/cpuinfo && echo 1 || echo 0)
 
@@ -309,6 +342,18 @@ endif
 ##
 ## Native compilation target
 ##
+
+ifeq ($(UNAME),Android)
+CFLAGS_NATIVE           := $(CFLAGS)
+CFLAGS_NATIVE           += -DWITH_HWMON
+CFLAGS_NATIVE           += -DANDROID
+LFLAGS_NATIVE           := $(LFLAGS)
+LFLAGS_NATIVE           += -ldl
+LFLAGS_NATIVE           += -lm
+
+## Used for Android C/C++ logging
+LFLAGS_NATIVE           += -llog
+endif # Android
 
 ifeq ($(UNAME),Linux)
 CFLAGS_NATIVE           := $(CFLAGS)

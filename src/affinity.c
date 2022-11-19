@@ -144,7 +144,21 @@ int set_cpu_affinity (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx)
 
   hcfree (devices);
 
-  #if defined (_WIN)
+  #if defined (ANDROID)
+
+  pthread_t thread = pthread_self ();
+
+  const int tid = pthread_gettid_np(thread);
+  const int rc = sched_setaffinity(tid, sizeof(cpu_set_t), &cpuset);
+
+  if (rc != 0)
+  {
+    event_log_error (hashcat_ctx, "pthread_setaffinity_np() failed with error: %d", rc);
+
+    return -1;
+  }
+
+  #elif defined (_WIN)
 
   if (SetProcessAffinityMask (GetCurrentProcess (), aff_mask) == 0)
   {
