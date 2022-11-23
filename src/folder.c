@@ -341,7 +341,22 @@ int folder_config_init (hashcat_ctx_t *hashcat_ctx, MAYBE_UNUSED const char *ins
     return -1;
   }
 
-  #if defined (_POSIX)
+  #if defined (ANDROID)
+
+  char *install_dir = hcmalloc (HCBUFSIZ_TINY);
+  // cwd needs to be a seperate pointer as it needs to be freed later seperatly
+  char *cwd_android = hcmalloc (HCBUFSIZ_TINY);
+
+  strncpy (install_dir, install_folder, HCBUFSIZ_TINY - 1);
+  strncpy (cwd_android, install_folder, HCBUFSIZ_TINY - 1);
+
+  cwd               = cwd_android;
+  char *profile_dir = install_dir;
+  char *cache_dir   = install_dir;
+  char *session_dir = install_dir;
+  char *shared_dir  = install_dir;
+
+  #elif defined (_POSIX)
 
   static const char SLASH[] = "/";
 
