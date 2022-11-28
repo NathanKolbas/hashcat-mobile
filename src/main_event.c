@@ -21,6 +21,10 @@
 #include "event.h"
 #include "main_event.h"
 
+#ifdef WITH_NATIVE_CB
+#include "native.h"
+#endif
+
 void main_log_clear_line (MAYBE_UNUSED const size_t prev_len, MAYBE_UNUSED FILE *fp)
 {
   if (!is_stdout_terminal ()) return;
@@ -90,6 +94,15 @@ void main_log (hashcat_ctx_t *hashcat_ctx, FILE *fp, const int loglevel)
     }
 
   #else
+    #ifdef WITH_NATIVE_CB
+    switch (loglevel)
+    {
+      case LOGLEVEL_INFO:                            break;
+      case LOGLEVEL_WARNING: cb_native ("\033[33m"); break;
+      case LOGLEVEL_ERROR:   cb_native ("\033[31m"); break;
+      case LOGLEVEL_ADVICE:  cb_native ("\033[33m"); break;
+    }
+    #endif
     switch (loglevel)
     {
       case LOGLEVEL_INFO:                                   break;
@@ -102,6 +115,9 @@ void main_log (hashcat_ctx_t *hashcat_ctx, FILE *fp, const int loglevel)
 
   // finally, print
 
+  #ifdef WITH_NATIVE_CB
+  cb_native (msg_buf);
+  #endif
   fwrite (msg_buf, msg_len, 1, fp);
 
   // color stuff post
@@ -116,6 +132,15 @@ void main_log (hashcat_ctx_t *hashcat_ctx, FILE *fp, const int loglevel)
       case LOGLEVEL_ADVICE:  SetConsoleTextAttribute (hConsole, orig); break;
     }
   #else
+    #ifdef WITH_NATIVE_CB
+    switch (loglevel)
+    {
+      case LOGLEVEL_INFO:                           break;
+      case LOGLEVEL_WARNING: cb_native ("\033[0m"); break;
+      case LOGLEVEL_ERROR:   cb_native ("\033[0m"); break;
+      case LOGLEVEL_ADVICE:  cb_native ("\033[0m"); break;
+    }
+    #endif
     switch (loglevel)
     {
       case LOGLEVEL_INFO:                                  break;
@@ -345,6 +370,9 @@ void main_cracker_hash_cracked (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx, MAYBE_U
     if (outfile_ctx->filename == NULL) if (user_options->quiet == false) clear_prompt (hashcat_ctx);
   }
 
+  #ifdef WITH_NATIVE_CB
+  cb_native (buf);
+  #endif
   fwrite (buf, len,          1, stdout);
   fwrite (EOL, strlen (EOL), 1, stdout);
 
@@ -391,6 +419,9 @@ void main_potfile_hash_show (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx, MAYBE_UNUS
 
   if (outfile_ctx->fp.pfp != NULL) return; // cracked hash was not written to an outfile
 
+  #ifdef WITH_NATIVE_CB
+  cb_native (buf);
+  #endif
   fwrite (buf, len,          1, stdout);
   fwrite (EOL, strlen (EOL), 1, stdout);
 }
@@ -401,6 +432,9 @@ void main_potfile_hash_left (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx, MAYBE_UNUS
 
   if (outfile_ctx->fp.pfp != NULL) return; // cracked hash was not written to an outfile
 
+  #ifdef WITH_NATIVE_CB
+  cb_native (buf);
+  #endif
   fwrite (buf, len, 1, stdout);
 }
 
@@ -467,6 +501,9 @@ void main_outerloop_mainscreen (MAYBE_UNUSED hashcat_ctx_t *hashcat_ctx, MAYBE_U
 
       if ((hashconfig->attack_exec == ATTACK_EXEC_OUTSIDE_KERNEL) && (hashconfig->is_salted == true))
       {
+        #ifdef WITH_NATIVE_CB
+        cb_native ("* Hash-Mode %d (%s) [Iterations: %d]", hashconfig->hash_mode, hashconfig->hash_name, hashes[0].salts_buf[0].salt_iter);
+        #endif
         len = snprintf (buf, sizeof (buf), "* Hash-Mode %d (%s) [Iterations: %d]", hashconfig->hash_mode, hashconfig->hash_name, hashes[0].salts_buf[0].salt_iter);
       }
       else

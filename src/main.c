@@ -25,6 +25,10 @@
 #include "brain.h"
 #endif
 
+#ifdef WITH_NATIVE_CB
+#include "native.h"
+#endif
+
 #if defined (__MINGW64__) || defined (__MINGW32__)
 int _dowildcard = -1;
 #endif
@@ -112,6 +116,9 @@ int main (int argc, char **argv)
 
   if (user_options->version == true)
   {
+    #ifdef WITH_NATIVE_CB
+    cb_native ("%s\n", VERSION_TAG);
+    #endif
     printf ("%s\n", VERSION_TAG);
 
     user_options_destroy (hashcat_ctx);

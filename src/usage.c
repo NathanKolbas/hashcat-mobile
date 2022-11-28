@@ -10,6 +10,11 @@
 #include "interface.h"
 #include "usage.h"
 
+#ifdef WITH_NATIVE_CB
+#include "native.h"
+#endif
+
+
 static const char *const USAGE_MINI[] =
 {
   "Usage: hashcat [options]... hash|hashfile|hccapxfile [dictionary|mask|directory]...",
@@ -283,6 +288,9 @@ void usage_mini_print (const char *progname)
 {
   for (int i = 0; USAGE_MINI[i] != NULL; i++)
   {
+    #ifdef WITH_NATIVE_CB
+    cb_native (USAGE_MINI[i], progname);
+    #endif
     printf (USAGE_MINI[i], progname);
 
     fwrite (EOL, strlen (EOL), 1, stdout);
@@ -336,6 +344,9 @@ void usage_big_print (hashcat_ctx_t *hashcat_ctx)
 
   for (int i = 0; USAGE_BIG_PRE_HASHMODES[i] != NULL; i++)
   {
+    #ifdef WITH_NATIVE_CB
+    cb_native ("%s", USAGE_BIG_PRE_HASHMODES[i]);
+    #endif
     printf ("%s", USAGE_BIG_PRE_HASHMODES[i]);
 
     fwrite (EOL, strlen (EOL), 1, stdout);
@@ -345,6 +356,9 @@ void usage_big_print (hashcat_ctx_t *hashcat_ctx)
 
   for (int i = 0; i < usage_sort_cnt; i++)
   {
+    #ifdef WITH_NATIVE_CB
+    cb_native ("%7u | %-58s | %s", usage_sort_buf[i].hash_mode, usage_sort_buf[i].hash_name, strhashcategory (usage_sort_buf[i].hash_category));
+    #endif
     printf ("%7u | %-58s | %s", usage_sort_buf[i].hash_mode, usage_sort_buf[i].hash_name, strhashcategory (usage_sort_buf[i].hash_category));
 
     fwrite (EOL, strlen (EOL), 1, stdout);
@@ -361,6 +375,9 @@ void usage_big_print (hashcat_ctx_t *hashcat_ctx)
 
   for (int i = 0; USAGE_BIG_POST_HASHMODES[i] != NULL; i++)
   {
+    #ifdef WITH_NATIVE_CB
+    cb_native ("%s", USAGE_BIG_POST_HASHMODES[i]);
+    #endif
     printf ("%s", USAGE_BIG_POST_HASHMODES[i]);
 
     fwrite (EOL, strlen (EOL), 1, stdout);

@@ -14,12 +14,14 @@ USE_SYSTEM_LZMA         ?= 0
 USE_SYSTEM_ZLIB         ?= 0
 USE_SYSTEM_OPENCL       ?= 0
 USE_SYSTEM_XXHASH       ?= 0
+WITH_NATIVE_CB          ?= 0
 ## do not change, requires some hacks
 USE_SYSTEM_UNRAR        ?= 0
 
 ## Android
 BUILD_ANDROID			?= 0
 ANDROID_NDK_PATH		?= 0
+## 28 is min version needed for available APIs
 ANDROID_API				?= 28
 ANDROID_TARGET			?= aarch64-linux-android
 
@@ -339,6 +341,10 @@ CFLAGS                  += -I$(DEPS_UNRAR_PATH)
 LFLAGS                  += -lstdc++
 endif
 
+ifeq ($(WITH_NATIVE_CB),1)
+CFLAGS                  += -DWITH_NATIVE_CB
+endif
+
 ##
 ## Native compilation target
 ##
@@ -347,12 +353,18 @@ ifeq ($(UNAME),Android)
 CFLAGS_NATIVE           := $(CFLAGS)
 CFLAGS_NATIVE           += -DWITH_HWMON
 CFLAGS_NATIVE           += -DANDROID
+ifneq ($(WITH_NATIVE_CB),1)
+WITH_NATIVE_CB			:= 1
+CFLAGS_NATIVE           += -DWITH_NATIVE_CB
+endif
 LFLAGS_NATIVE           := $(LFLAGS)
 LFLAGS_NATIVE           += -ldl
 LFLAGS_NATIVE           += -lm
 
-## Used for Android C/C++ logging
+ifeq ($(DEBUG),1)
+# Used for Android C/C++ logging
 LFLAGS_NATIVE           += -llog
+endif
 endif # Android
 
 ifeq ($(UNAME),Linux)
@@ -456,6 +468,10 @@ endif
 
 ifeq ($(ENABLE_BRAIN),1)
 OBJS_ALL                += brain
+endif
+
+ifeq ($(WITH_NATIVE_CB),1)
+OBJS_ALL                += native
 endif
 
 NATIVE_OBJS             := $(foreach OBJ,$(OBJS_ALL),obj/$(OBJ).NATIVE.o)
