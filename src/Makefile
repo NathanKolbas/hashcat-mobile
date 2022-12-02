@@ -62,7 +62,7 @@ endif
 ## Makefile flags
 ##
 
-MAKEFLAGS               += -l -j 8 -rR --no-print-directory
+MAKEFLAGS               += -l -j 1 -rR --no-print-directory
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),)
 MAKEFLAGS               += -j 1
@@ -472,6 +472,7 @@ endif
 
 ifeq ($(WITH_NATIVE_CB),1)
 OBJS_ALL                += native
+OBJS_ALL                += dart_api_dl
 endif
 
 NATIVE_OBJS             := $(foreach OBJ,$(OBJS_ALL),obj/$(OBJ).NATIVE.o)

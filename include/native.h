@@ -11,10 +11,11 @@
 
 #include "types.h"
 #include "memory.h"
+#include "dart_api_dl.h"
 
-extern void (*native_callback) (char *data);
+static Dart_Port_DL dart_port;
 
-void init_native_callback (void (*callback) (char *data));
+void init_native_callback (Dart_Port_DL port);
 void va_cb_native         (const char *format, va_list ap);
 void cb_native            (const char *format, ...);
 

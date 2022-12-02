@@ -5,12 +5,13 @@
 
 #include "native.h"
 
+// Check this gist for setting up native callback for dart:
+// https://gist.github.com/espresso3389/be5674ab4e3154f0b7c43715dcef3d8d
+
 /**
- * Stores the native callback function. MUST call `init_native_callback` first.
- *
- * @param data the char array to pass back to native
+ * Stores the native callback port. MUST call `init_native_callback` first.
  */
-void (*native_callback) (char *data);
+static Dart_Port_DL dart_port = 0;
 
 /**
  * Initialize `native_callback`. This is used to allow native callbacks to other code.
@@ -19,9 +20,9 @@ void (*native_callback) (char *data);
  *
  * @param callback the function that will be called back to native code.
  */
-void init_native_callback (void (*callback) (char *data))
+void init_native_callback (Dart_Port_DL port)
 {
-  native_callback = callback;
+  dart_port = port;
 }
 
 void va_cb_native (const char *format, va_list ap)
@@ -30,7 +31,13 @@ void va_cb_native (const char *format, va_list ap)
   int size = vasprintf (&data, format, ap);
 
   if (size != -1) {
-    native_callback (data);
+    if (!dart_port)
+      return;
+    Dart_CObject msg;
+    msg.type = Dart_CObject_kString;
+    msg.value.as_string = (char *)data;
+    // The function is thread-safe; you can call it anywhere on your C++ code
+    Dart_PostCObject_DL(dart_port, &msg);
   }
 
   free (data);
